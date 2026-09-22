@@ -131,41 +131,62 @@ class Solution:
 右指针扩张直到窗口满足需求，左指针再尽量收缩。不要反复比较整个频次表；用 `formed` 记录已有多少种字符达到了所需数量。
 
 ```python
-from collections import Counter
-
-
 class Solution:
     def minWindow(self, s: str, t: str) -> str:
-        if not t or len(t) > len(s):
-            return ''
+        if not t:
+            return ""
 
-        need = Counter(t)
+        target = {}
+        for c in t:
+            target[c] = target.get(c, 0) + 1
+
         window = {}
-        required = len(need)
+
+        # required:
+        # 需要满足多少种字符
+        required = len(target)
+
+        # formed:
+        # 当前已经满足多少种字符
         formed = 0
+
         left = 0
-        best_length = float('inf')
-        best_start = 0
+
+        best_left = 0
+        best_len = float("inf")
 
         for right, char in enumerate(s):
+            # 扩大窗口
             window[char] = window.get(char, 0) + 1
-            if char in need and window[char] == need[char]:
+
+            # 某一种目标字符刚好满足要求
+            if char in target and window[char] == target[char]:
                 formed += 1
 
+            # 当前窗口有效，尽可能缩小
             while formed == required:
-                if right - left + 1 < best_length:
-                    best_length = right - left + 1
-                    best_start = left
+                current_len = right - left + 1
+
+                if current_len < best_len:
+                    best_len = current_len
+                    best_left = left
 
                 left_char = s[left]
                 window[left_char] -= 1
-                if left_char in need and window[left_char] < need[left_char]:
+
+                # 删除之后，该字符不再满足要求
+                if (
+                    left_char in target
+                    and window[left_char] < target[left_char]
+                ):
                     formed -= 1
+
                 left += 1
 
-        if best_length == float('inf'):
-            return ''
-        return s[best_start:best_start + best_length]
+        if best_len == float("inf"):
+            return ""
+
+        return s[best_left:best_left + best_len]
 ```
 
 复杂度：时间 `O(|s| + |t|)`，空间 `O(|Σ|)`。
@@ -296,27 +317,44 @@ class Solution:
 
 ## 破局点
 
-单调递增栈保存“某高度最早可延伸到的下标”。遇到更矮柱时，弹出的高度已确定右边界；当前柱可继承被弹元素的最早起点。扫描结束后再结算仍在栈中的柱。
+维护一个栈保存柱子的下标并保证对应高度按照单调递增关系排列。 当遇到一个更矮的柱子时，说明到达栈顶柱子的右边界。 此时栈顶柱子左边界是栈中次顶柱子，计算面积并更新最大值。最后处理栈中剩余柱子。
 
 ```python
+from typing import List
+
+
 class Solution:
     def largestRectangleArea(self, heights: List[int]) -> int:
-        stack = []  # (start_index, height)
-        largest = 0
+        # 添加高度为 0 的哨兵，
+        # 确保最后所有柱子都会被弹出并计算
+        heights = heights + [0]
+
+        stack = []
+        max_area = 0
 
         for i, height in enumerate(heights):
-            start = i
-            while stack and stack[-1][1] > height:
-                index, previous_height = stack.pop()
-                largest = max(largest, previous_height * (i - index))
-                start = index
-            stack.append((start, height))
 
-        n = len(heights)
-        for index, height in stack:
-            largest = max(largest, height * (n - index))
+            while stack and heights[stack[-1]] >= height:
+                current_height = heights[stack.pop()]
 
-        return largest
+                # 弹出后：
+                # i 是右侧第一个更矮柱子
+                #
+                # stack[-1]（若存在）
+                # 是左侧第一个更矮柱子
+                if stack:
+                    width = i - stack[-1] - 1
+                else:
+                    width = i
+
+                max_area = max(
+                    max_area,
+                    current_height * width
+                )
+
+            stack.append(i)
+
+        return max_area
 ```
 
 复杂度：时间 `O(n)`，空间 `O(n)`。

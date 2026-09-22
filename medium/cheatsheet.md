@@ -1,4 +1,4 @@
-# 1. 两数相加（Add Two Numbers）[Easy]
+# 1. 两数相加（Add Two Numbers）
 
 给定两个**非空**链表 `l1` 和 `l2`，它们分别表示两个非负整数。
 
@@ -84,7 +84,7 @@ class Solution:
         return dummy.next
 ```
 
-# 2. 盛最多水的容器（Container With Most Water）[Easy]
+# 2. 盛最多水的容器（Container With Most Water）
 
 给定一个整数数组 `heights`，其中：
 
@@ -177,91 +177,63 @@ class Solution:
 
 ## 破局点
 
-把复制节点插在原节点后，使 `original.next` 就是其副本；于是复制节点的随机指针可由 `original.random.next` 得到，最后拆分并恢复原链表。
+可以分为两个阶段进行处理。第一阶段只复制链表，第二阶段再创建连接。
 
 ```python
+"""
+# Node 定义
+class Node:
+    def __init__(
+        self,
+        x: int,
+        next: 'Node' = None,
+        random: 'Node' = None
+    ):
+        self.val = int(x)
+        self.next = next
+        self.random = random
+"""
+
 class Solution:
     def copyRandomList(self, head: 'Optional[Node]') -> 'Optional[Node]':
 
-        if head is None:
-            return None
-
-        # ==================================================
-        # Step 1：在每个原节点后插入它的复制节点
+        # 原节点 -> 复制节点
         #
-        # A -> B -> C
-        #
-        # 变成：
-        #
-        # A -> A' -> B -> B' -> C -> C'
-        # ==================================================
+        # 提前加入 None -> None，
+        # 后面处理 next/random 时就不需要额外判断 None。
+        oldToCopy = {None: None}
 
-        l1 = head
+        # ---------- 第一遍 ----------
+        # 创建所有复制节点
+        cur = head
 
-        while l1 is not None:
-            l2 = Node(l1.val)
+        while cur:
+            copy = Node(cur.val)
+            oldToCopy[cur] = copy
 
-            # 新节点先连接原来的下一个节点
-            l2.next = l1.next
+            cur = cur.next
 
-            # 原节点再连接复制节点
-            l1.next = l2
+        # ---------- 第二遍 ----------
+        # 设置复制节点的 next 和 random
+        cur = head
 
-            # 跳到下一个原节点
-            l1 = l2.next
+        while cur:
+            copy = oldToCopy[cur]
 
-        # 复制链表的头一定是 head 后面的节点
-        newHead = head.next
+            # 原 next 指向谁，
+            # 新 next 就指向“谁的复制节点”
+            copy.next = oldToCopy[cur.next]
 
-        # ==================================================
-        # Step 2：设置复制节点的 random
-        # ==================================================
+            # random 同理
+            copy.random = oldToCopy[cur.random]
 
-        l1 = head
+            cur = cur.next
 
-        while l1 is not None:
-
-            if l1.random is not None:
-                # l1.next 是 l1 的复制节点
-                #
-                # l1.random.next 是
-                # l1.random 对应的复制节点
-                l1.next.random = l1.random.next
-
-            # 跳过复制节点，到下一个原节点
-            l1 = l1.next.next
-
-        # ==================================================
-        # Step 3：拆开两个链表
-        #
-        # A -> A' -> B -> B'
-        #
-        # 恢复：
-        # A -> B
-        #
-        # 得到：
-        # A' -> B'
-        # ==================================================
-
-        l1 = head
-
-        while l1 is not None:
-            l2 = l1.next
-
-            # 恢复原链表
-            l1.next = l2.next
-
-            # 连接复制链表
-            if l2.next is not None:
-                l2.next = l2.next.next
-
-            # 前往下一个原节点
-            l1 = l1.next
-
-        return newHead
+        # head 为 None 时，也能正确返回 None
+        return oldToCopy[head]
 ```
 
-# 4. 二叉树的层序遍历（Binary Tree Level Order Traversal）[Easy]
+# 4. 二叉树的层序遍历（Binary Tree Level Order Traversal）
 
 给定一棵二叉树的根节点 `root`，返回该二叉树的**层序遍历**结果。
 
@@ -334,7 +306,7 @@ class Solution:
         return res
 ```
 
-# 5. Binary Tree Right Side View（二叉树的右视图）
+# 5. 二叉树的右视图（Binary Tree Right Side View）
 
 给定一棵二叉树的根节点 `root`，返回从二叉树**右侧观察时能够看到的节点值**，结果按照**从上到下**的顺序排列。
 
@@ -362,7 +334,7 @@ class Solution:
 
 ## 破局点
 
-按“根、右、左”DFS；每个深度第一次访问的节点就是右视图节点，用 `depth == len(res)` 判断首次到达。
+进行BFS，每层只取最后一个节点。
 
 ```python
 # Definition for a binary tree node.
@@ -373,33 +345,43 @@ class Solution:
 #         self.right = right
 
 
+from collections import deque
+
+
 class Solution:
     def rightSideView(self, root: Optional[TreeNode]) -> List[int]:
-        # res[i] 保存深度 i 能够从右侧看到的节点
         res = []
 
-        def dfs(node, depth):
-            # 到达空节点，结束递归
-            if not node:
-                return
+        # deque 是双端队列
+        q = deque([root])
 
-            # 如果 depth == len(res)，说明这是第一次访问这一层
-            # 因为我们优先访问右子树，所以当前节点就是这一层最右侧的节点
-            if depth == len(res):
-                res.append(node.val)
+        while q:
+            rightSide = None
 
-            # 一定要先访问右子树
-            dfs(node.right, depth + 1)
+            # 当前这一层有多少个节点
+            qLen = len(q)
 
-            # 然后再访问左子树
-            dfs(node.left, depth + 1)
+            for i in range(qLen):
+                # 从队列左侧取出节点
+                node = q.popleft()
 
-        dfs(root, 0)
+                if node:
+                    # 因为按照从左到右遍历，
+                    # rightSide 最终会停留在这一层最右边的节点
+                    rightSide = node
+
+                    # 将下一层节点加入队列
+                    q.append(node.left)
+                    q.append(node.right)
+
+            # 当前层存在有效节点
+            if rightSide:
+                res.append(rightSide.val)
 
         return res
 ```
 
-# 6. 从前序遍历与中序遍历构造二叉树 [Difficult]
+# 6. 从前序遍历与中序遍历构造二叉树（Construct Binary Tree from Preorder and Inorder Traversal） ⭐
 
 给定两个整数数组 `preorder` 和 `inorder`：
 
@@ -526,7 +508,7 @@ class Solution:
         graph = [[] for _ in range(numCourses)]
 
         for course, prerequisite in prerequisites:
-            # prerequisite -> course
+            # 前置课程（prerequisite） -> 可以继续学习的课程（course）
             graph[prerequisite].append(course)
             indegree[course] += 1
 
@@ -567,7 +549,8 @@ class Solution:
 
 ## 破局点
 
-排序后从 `start` 向后枚举以避免排列重复；选择 `nums[j]` 后仍从 `j` 递归以允许复用，超过目标即可剪枝。
+要点是排序，排序后从 `start` 向后枚举以避免排列重复；选择 `nums[j]` 后仍从 `j` 递归以允许复用，超过目标即可剪枝。
+如果不排序，仍然可以通过 `if next_total > target: continue` 来剪枝。
 
 ```python
 from typing import List
@@ -796,34 +779,47 @@ class Solution:
 
 ## 破局点
 
-令 `dp[i][j]` 表示把 `word1[i:]` 变成 `word2[j:]` 的最少操作数。字符相同则走右下角；不同则在删除、插入、替换三个后继状态中取最小值并加一。
-
+令 `dp[i][j]` 表示把 `word1[:i]` 变成 `word2[:j]` 的最少操作数。如果当前字符相同哦，则 `dp[i][j] = dp[i - 1][j - 1]`；否则考虑三种操作的最小值。如果选择删除，则表示在删除前需要把 `word1[:i - 1]` 变成 `word2[:j]`，因此 `dp[i][j] = dp[i - 1][j] + 1`；如果选择插入，则表示在插入前需要把 `word1[:i]` 变成 `word2[:j - 1]`，因此 `dp[i][j] = dp[i][j - 1] + 1`；如果选择替换，则表示在替换前需要把 `word1[:i - 1]` 变成 `word2[:j - 1]`，因此 `dp[i][j] = dp[i - 1][j - 1] + 1`。
 ```python
 class Solution:
     def minDistance(self, word1: str, word2: str) -> int:
         m, n = len(word1), len(word2)
 
-        # 多出的一行和一列用于表示某个字符串已经处理完
+        # dp[i][j]:
+        # word1 的前 i 个字符转换成 word2 的前 j 个字符
+        # 所需要的最少操作数
         dp = [[0] * (n + 1) for _ in range(m + 1)]
 
-        # word1 已处理完：需要插入 word2 剩余字符
-        for j in range(n + 1):
-            dp[m][j] = n - j
-
-        # word2 已处理完：需要删除 word1 剩余字符
+        # word2 为空：
+        # word1 的前 i 个字符全部删除
         for i in range(m + 1):
-            dp[i][n] = m - i
+            dp[i][0] = i
 
-        # 从右下角向左上角填表
-        for i in range(m - 1, -1, -1):
-            for j in range(n - 1, -1, -1):
-                if word1[i] == word2[j]:
-                    # 当前字符相同，不需要操作
-                    dp[i][j] = dp[i + 1][j + 1]
+        # word1 为空：
+        # 需要插入 word2 的前 j 个字符
+        for j in range(n + 1):
+            dp[0][j] = j
+
+        # 从左上角向右下角填表
+        for i in range(1, m + 1):
+            for j in range(1, n + 1):
+
+                # 注意：
+                # dp[i][j] 表示前 i / j 个字符
+                # 所以当前字符下标是 i - 1 和 j - 1
+                if word1[i - 1] == word2[j - 1]:
+                    # 当前字符相同，不需要额外操作
+                    dp[i][j] = dp[i - 1][j - 1]
+
                 else:
-                    delete_cost = dp[i + 1][j]
-                    insert_cost = dp[i][j + 1]
-                    replace_cost = dp[i + 1][j + 1]
+                    # 删除 word1 当前字符
+                    delete_cost = dp[i - 1][j]
+
+                    # 向 word1 中插入一个字符
+                    insert_cost = dp[i][j - 1]
+
+                    # 替换当前字符
+                    replace_cost = dp[i - 1][j - 1]
 
                     dp[i][j] = 1 + min(
                         delete_cost,
@@ -831,7 +827,7 @@ class Solution:
                         replace_cost,
                     )
 
-        return dp[0][0]
+        return dp[m][n]
 ```
 
 # 13. 轮转数组（Rotate Array）
@@ -1424,7 +1420,7 @@ class Solution:
         return jumps
 ```
 
-# 25. 数组中的第 K 个最大元素
+# 25. 数组中的第 K 个最大元素⭐
 
 给定一个未排序的整数数组 `nums` 和一个整数 `k`，请返回数组中第 `k` 大的元素。
 
@@ -1618,31 +1614,20 @@ class Solution:
 
 两个字符串的**公共子序列**，是指同时为这两个字符串子序列的字符串。
 
-**破局点：** 令 `dp[i][j]` 表示两个后缀的 LCS 长度。字符相同就同时前进；不同就分别跳过一个字符取较大值。依赖右、下、右下状态，所以从右下向左上填表。
+**破局点：** 令 `dp[i][j]` 表示text1的前i个字符和text2的前j个字符的 LCS 长度。若两个字符相同，则 LCS 长度为前一个状态加1；否则取两个之前状态中的较大值。
 
 ```python
 class Solution:
     def longestCommonSubsequence(self, text1: str, text2: str) -> int:
-        m, n = len(text1), len(text2)
-
-        # dp[i][j] 表示 text1[i:] 和 text2[j:] 的 LCS 长度
-        # 额外的一行和一列表示空字符串
-        dp = [[0] * (n + 1) for _ in range(m + 1)]
-
-        # 从右下角向左上角填表
-        for i in range(m - 1, -1, -1):
-            for j in range(n - 1, -1, -1):
-                if text1[i] == text2[j]:
-                    # 当前字符相同，同时移动两个索引
-                    dp[i][j] = 1 + dp[i + 1][j + 1]
+        # 添加额外一行和一列，方便处理边界情况
+        dp=[[0]*(len(text2)+1) for _ in range(len(text1)+1)]
+        for i in range(1,len(text1)+1):
+            for j in range(1,len(text2)+1):
+                if text1[i-1]==text2[j-1]:
+                    dp[i][j]=dp[i-1][j-1]+1
                 else:
-                    # 跳过 text1[i] 或 text2[j]
-                    dp[i][j] = max(
-                        dp[i + 1][j],
-                        dp[i][j + 1]
-                    )
-
-        return dp[0][0]
+                    dp[i][j]=max(dp[i][j-1],dp[i-1][j])
+        return dp[-1][-1]
 ```
 
 # 30. 最长连续序列（Longest Consecutive Sequence）
@@ -3420,7 +3405,7 @@ True
 
 ## 破局点
 
-从右上角开始：当前值太大就左移并排除一列，太小就下移并排除一行。时间 `O(m+n)`，空间 `O(1)`。
+从右上角开始：当前值太大就左移并排除一列，太小就下移并排除一行。时间 `O(m+n)`，空间 `O(1)`。 （或者从左下角开始）
 
 ```python
 from typing import List
@@ -3634,7 +3619,7 @@ class Solution:
         # 第二步：沿主对角线进行转置
         n = len(matrix)
 
-        for i in range(n):
+        for i in range(0,n-1):
             # 只遍历主对角线右上方的元素
             # 防止同一对元素被交换两次
             for j in range(i + 1, n):
