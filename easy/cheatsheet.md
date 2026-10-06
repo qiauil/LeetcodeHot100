@@ -374,7 +374,7 @@ class Solution:
 
 ## 破局点
 
-每次改写 `current.next` 前必须先保存后继节点，否则会丢失未处理部分；`previous` 始终代表已经反转好的链表头。
+每次改写 `current.next` 前必须先保存后继节点，否则会丢失未处理部分；**`previous` 始终代表已经反转好的链表头**。
 
 ```python
 class Solution:

@@ -1,4 +1,4 @@
-# Rotate Array — 旋转数组
+#  轮转数组（Rotate Array）
 
 给定一个整数数组 `nums`，将数组向右旋转 `k` 步，其中 `k` 是非负整数。
 

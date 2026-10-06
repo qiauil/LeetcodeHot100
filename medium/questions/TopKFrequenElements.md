@@ -1,4 +1,4 @@
-# Top K Frequent Elements — 前 K 个高频元素
+# 前K个高频元素(Top K Frequent Elements)
 
 ## 题目说明
 
@@ -1605,5 +1605,3 @@ Top K Frequent Elements
 ```
 
 那么 **Bucket Sort / frequency array** 往往就是一个值得考虑的方向。
-
-之后你继续发题目时，我也会保持这种格式：除了翻译、算法、复杂度以外，如果出现值得掌握的 Python API，我会单独解释它的**语法、行为、常见面试用法以及容易踩的坑**。
