@@ -1,4 +1,4 @@
-# 数据流中的中位数（Find Median From Data Stream）
+# 数据流的中位数（Find Median From Data Stream）
 
 中位数（Median）是一个有序整数序列中位于中间位置的值。
 

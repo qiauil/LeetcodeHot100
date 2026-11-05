@@ -58,16 +58,15 @@ class Solution:
 
 ```python
 def binary_search(nums, target):
-    left = 0
-    right = len(nums)
+    left, right = 0, len(nums) - 1
 
-    while left < right:
+    while left <= right:
         mid = (left + right) // 2
 
         if nums[mid] < target:
             left = mid + 1
         else:
-            right = mid
+            right = mid - 1
 
     return left
 ```
@@ -181,21 +180,20 @@ def inorder_iterative(root):
 * post-order
 
 ```python
-def inorder_iterative(root):
+def postorder_iterative(root):
+    if root is None:
+        return []
     result = []
-    stack = []
-    current = root
-    while current or stack:
-        # 1. Keep moving left
-        while current:
-            stack.append(current)
-            current = current.left
-        # 2. Once the leftmost point is reached, visit the stack's top node
-        current = stack.pop()
-        result.append(current.val)
-        # 3. Move to the right subtree
-        current = current.right
-    return result
+    stack = [root]
+    while stack:
+        node = stack.pop()
+        result.append(node.val)
+        # Push left first, then right
+        if node.left:
+            stack.append(node.left)
+        if node.right:
+            stack.append(node.right)
+    return result[::-1]
 ```
 
 ### BFS

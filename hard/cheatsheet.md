@@ -372,21 +372,78 @@ import heapq
 
 
 class MedianFinder:
+
     def __init__(self):
-        self.small = []  # 最大堆，实际保存负数
-        self.large = []  # 最小堆
+        # small 保存较小的一半数字。
+        #
+        # Python heapq 只有最小堆，因此通过存储负数模拟最大堆。
+        # 例如数字 5 会保存为 -5。
+        #
+        # -small[0] 就是较小一半中的最大值。
+        self.small = []
+
+        # large 保存较大的一半数字。
+        #
+        # 使用普通最小堆。
+        # large[0] 就是较大一半中的最小值。
+        self.large = []
 
     def addNum(self, num: int) -> None:
-        heapq.heappush(self.small, -num)
-        heapq.heappush(self.large, -heapq.heappop(self.small))
 
-        if len(self.large) > len(self.small):
-            heapq.heappush(self.small, -heapq.heappop(self.large))
+        # -------------------------
+        # 1. 将 num 放入正确的堆
+        # -------------------------
+
+        # 如果 large 不为空，并且 num 比 large 中最小的数字还大，
+        # 那么 num 属于较大的一半。
+        if self.large and num > self.large[0]:
+            heapq.heappush(self.large, num)
+
+        else:
+            # 否则放入较小的一半。
+            # small 是最大堆，因此存储 -num。
+            heapq.heappush(self.small, -num)
+
+        # -------------------------
+        # 2. 平衡两个堆
+        # -------------------------
+
+        # small 比 large 多超过一个元素：
+        #
+        # 将 small 中最大的元素移动到 large。
+        if len(self.small) > len(self.large) + 1:
+
+            # small 中存储的是负数，
+            # 所以取出后重新变成正数。
+            value = -heapq.heappop(self.small)
+
+            heapq.heappush(self.large, value)
+
+        # large 比 small 多超过一个元素：
+        #
+        # 将 large 中最小的元素移动到 small。
+        elif len(self.large) > len(self.small) + 1:
+
+            value = heapq.heappop(self.large)
+
+            # small 是最大堆，因此存负数。
+            heapq.heappush(self.small, -value)
 
     def findMedian(self) -> float:
+
+        # small 元素更多：
+        # 中位数就是 small 的最大值。
         if len(self.small) > len(self.large):
-            return float(-self.small[0])
-        return (-self.small[0] + self.large[0]) / 2
+            return -self.small[0]
+
+        # large 元素更多：
+        # 中位数就是 large 的最小值。
+        if len(self.large) > len(self.small):
+            return self.large[0]
+
+        # 两个堆大小相同：
+        # 中位数为两个堆顶元素的平均值。
+        return (-self.small[0] + self.large[0]) / 2.0
 ```
 
 复杂度：`addNum` 时间 `O(log n)`，`findMedian` 时间 `O(1)`，空间 `O(n)`。
@@ -460,7 +517,7 @@ class Solution:
 
 ## 破局点
 
-向父节点只能贡献一条单边路径，因此 DFS 返回 `node.val + max(left_gain, right_gain)`；但以当前节点为最高点的完整路径可以同时取左右增益。负增益应截断为 0。
+一个节点向父节点只能贡献一条单边路径，因此 DFS 返回 `node.val + max(left_gain, right_gain)`；但以当前节点为最高点的完整路径可以同时取左右增益。负增益应截断为 0。
 
 ```python
 class Solution:
@@ -474,8 +531,11 @@ class Solution:
 
             left_gain = max(gain(node.left), 0)
             right_gain = max(gain(node.right), 0)
-
+            # 以当前节点为最高点的完整路径:
+            # 应该是max(best, node.val+left.val, node.val+right.val, node.val+left.val+right.val, node.val)
+            # 负增益应截断为 0，因此可以简化为：
             best = max(best, node.val + left_gain + right_gain)
+            # 可以向父节点贡献的最大增益:
             return node.val + max(left_gain, right_gain)
 
         gain(root)

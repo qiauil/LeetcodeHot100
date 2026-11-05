@@ -1420,7 +1420,7 @@ class Solution:
         return jumps
 ```
 
-# 25. 数组中的第 K 个最大元素⭐
+# 25. 数组中的第 K 个最大元素
 
 给定一个未排序的整数数组 `nums` 和一个整数 `k`，请返回数组中第 `k` 大的元素。
 
@@ -1680,6 +1680,8 @@ class Solution:
 
 **子序列（subsequence）\**是指：从原序列中删除任意数量（也可以一个都不删除）的元素，并且\**不改变剩余元素之间的相对顺序**，得到的新序列。
 
+时间复杂度必须降低到 O(n log(n))
+
 例如：
 
 ```
@@ -1701,18 +1703,32 @@ nums = [10, 9, 2, 5, 3, 7, 101, 18]
 
 ## 破局点
 
-维护 `dp[i]` 为以第i个数字结尾的递增子序列，状态转移方程为`dp[i]=max(dp[j]+1,dp[i])`·其中j是小于i的所有可能数字。
+维护 `dp[i]` 表示长度为 `i + 1` 的递增子序列的最小结尾元素。遍历 `nums`，若当前元素大于 `dp` 最后一个元素，则直接追加；否则用二分查找找到第一个大于等于当前元素的位置并替换。最终 `dp` 的长度即为最长递增子序列的长度。
 
 ```python
 class Solution:
-    def lengthOfLIS(self, nums: List[int]) -> int:
-        #dp[i] the length of the sequence end with i
-        dp = [1]*len(nums)
-        for i in range(1,len(nums)):
-            for j in range(i):
-                if nums[i] > nums[j]:
-                    dp[i]=max(dp[j]+1,dp[i])
-        return max(dp)
+    def lengthOfLIS(self, nums: list[int]) -> int:
+        dp=[nums[0]]
+        for n_i in nums[1:]:
+            if n_i>dp[-1]:
+                dp.append(n_i)
+            else:
+                target_idx=self.find_first_eqlarger(dp,n_i)
+                dp[target_idx]=n_i
+        return len(dp)
+
+    def find_first_eqlarger(self,dp,target):
+        l,r=0,len(dp)-1
+        while l<=r:
+            mid=(l+r)//2
+            if dp[mid] == target:
+                return mid
+            elif dp[mid] <target:
+                l=mid+1
+            else:
+                r=mid-1
+        return l
+        
 ```
 
 # 32. 最长回文子串（Longest Palindromic Substring）
@@ -1861,9 +1877,7 @@ class Solution:
 
 给定一棵二叉树，以及树中的两个节点 `p` 和 `q`，找到它们的**最近公共祖先**（Lowest Common Ancestor，LCA）。
 
-根据最近公共祖先的定义：
-
-> 节点 `p` 和 `q` 的最近公共祖先，是树 `T` 中同时以 `p` 和 `q` 为后代的**最深节点**。这里规定：**一个节点也可以是它自己的后代**。
+根据最近公共祖先的定义：节点 `p` 和 `q` 的最近公共祖先，是树 `T` 中同时以 `p` 和 `q` 为后代的**最深节点**。这里规定：**一个节点也可以是它自己的后代**。
 
 这里的「最近 / Lowest」指的是**在树中的深度最大、距离 `p` 和 `q` 最近的公共祖先**，而不是节点值最小。
 
@@ -3129,7 +3143,7 @@ class Solution:
 
 ## 破局点
 
-链表适合归并排序：快慢指针找中点并断链，递归排好左右两半，再原地合并。时间 `O(n log n)`，递归栈空间 `O(log n)`。
+链表适合归并排序：快慢指针找中点并断链，递归排好左右两半，再原地合并。时间 `O(n log n)`，递归栈空间 `O(log n)`。注意，与寻找环形链表不同，快指针初始位置为 `head.next`，这样当链表长度为偶数时，慢指针会停在前半段的最后一个节点，便于断链。
 
 ```python
 class Solution:
