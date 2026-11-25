@@ -1,8 +1,6 @@
-## Backtracking
+## 回溯
 
-### A General Backtracking Template
-
-Most backtracking algorithms follow this pattern:
+回溯算法模板：
 
 ```python
 def backtrack(path, choices):
@@ -24,11 +22,9 @@ def backtrack(path, choices):
         path.pop()
 ```
 
-### Example
+例子：[全排列](https://leetcode.cn/problems/permutations/)
 
-[Permutations](https://leetcode.cn/problems/permutations/)
-
-Given an array `nums` of distinct integers, return all the possible permutations. You can return the answer in **any order**.
+给定一个不含重复数字的数组 `nums` ，返回其 *所有可能的全排列* 。你可以 **按任意顺序** 返回答案。
 
 ```
 Input: nums = [1,2,3]
@@ -54,7 +50,9 @@ class Solution:
         return res
 ```
 
-## Binary Search
+## 二分法
+
+二分法模板：
 
 ```python
 def binary_search(nums, target):
@@ -62,6 +60,8 @@ def binary_search(nums, target):
 
     while left <= right:
         mid = (left + right) // 2
+        if nums[mid] == target:
+            return mid
 
         if nums[mid] < target:
             left = mid + 1
@@ -71,13 +71,11 @@ def binary_search(nums, target):
     return left
 ```
 
-### Example
+例子：[Search Insert Position](https://leetcode.cn/problems/search-insert-position/)
 
-[Search Insert Position](https://leetcode.cn/problems/search-insert-position/)
+给定一个排序数组和一个目标值，在数组中找到目标值，并返回其索引。如果目标值不存在于数组中，返回它将会被按顺序插入的位置。
 
-Given a sorted array of distinct integers and a target value, return the index if the target is found. If not, return the index where it would be if it were inserted in order.
-
-You must write an algorithm with `O(log n)` runtime complexity.
+请必须使用时间复杂度为 `O(log n)` 的算法。
 
 **Example 1:**
 
@@ -99,11 +97,11 @@ class Solution:
         return l
 ```
 
-## Binary Tree
+## 二叉树
 
-### DFS
+### 深度优先搜索（DFS）
 
-* pre-order
+* 前序（pre-order ，根-左-右）
 
 ```python
 def inorder_traversal(node: TreeNode):
@@ -114,7 +112,7 @@ def inorder_traversal(node: TreeNode):
     inorder_traversal(node.right)
 ```
 
-* in-order
+* 中序（in-order， 左-根-右）
 
 ```python
 def inorder_traversal(node: TreeNode):
@@ -125,7 +123,7 @@ def inorder_traversal(node: TreeNode):
     inorder_traversal(node.right)
 ```
 
-* post-order
+* 后序(post-order, 左-右-根)
 
 ```python
 def postorder_traversal(node: TreeNode):
@@ -136,9 +134,9 @@ def postorder_traversal(node: TreeNode):
     print(node.val)
 ```
 
-### Iterative DFS
+### 迭代式深度优先搜索 （Iterative DFS）
 
-* pre-order
+* 前序
 
 ```python
 def preorder_iterative(root):
@@ -149,7 +147,7 @@ def preorder_iterative(root):
     while stack:
         current = stack.pop()
         result.append(current.val)
-        # Important: push right first, then left
+        # 重点：先右后左，因为pop的时候从尾部开始
         if current.right:
             stack.append(current.right)
         if current.left:
@@ -157,7 +155,7 @@ def preorder_iterative(root):
     return result
 ```
 
-* In-order
+* 中序
 
 ```python
 def inorder_iterative(root):
@@ -165,19 +163,21 @@ def inorder_iterative(root):
     stack = []
     current = root
     while current or stack:
-        # 1. Keep moving left
+        # 1. 一路向左
         while current:
             stack.append(current)
             current = current.left
-        # 2. Once the leftmost point is reached, visit the stack's top node
+        # 2. 到达左侧尽头，添加结果
         current = stack.pop()
         result.append(current.val)
-        # 3. Move to the right subtree
+        # 转向右子树
         current = current.right
     return result
 ```
 
-* post-order
+* 后序 
+
+  仿照前序，遍历根-右-左，然后列表倒着来，输出左右根
 
 ```python
 def postorder_iterative(root):
@@ -188,7 +188,7 @@ def postorder_iterative(root):
     while stack:
         node = stack.pop()
         result.append(node.val)
-        # Push left first, then right
+        # 先左后右
         if node.left:
             stack.append(node.left)
         if node.right:
@@ -196,7 +196,7 @@ def postorder_iterative(root):
     return result[::-1]
 ```
 
-### BFS
+### 广度优先搜索（BFS）：
 
 ```python
 from collections import deque
@@ -210,8 +210,7 @@ class Solution:
         q = deque([root])
 
         while q:
-            # in each iteration, we will process all nodes at the current level
-            # Get the number of nodes at the current level
+            # 遍历当前层
             level_size = len(q)
             for i in range(level_size):
                 node = q.popleft()
